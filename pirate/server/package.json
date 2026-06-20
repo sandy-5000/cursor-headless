@@ -1,0 +1,21 @@
+{
+  "name": "pirate-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "start:prod": "NODE_ENV=production bun run src/index.ts",
+    "seed:demo": "bun run src/seed-demo.ts",
+    "seed:samples": "bun run src/seed-samples.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.4",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.15.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.9"
+  }
+}

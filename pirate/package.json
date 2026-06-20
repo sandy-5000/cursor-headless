@@ -1,0 +1,15 @@
+{
+  "name": "pirate",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\"",
+    "dev:server": "cd server && bun run dev",
+    "dev:client": "cd client && bun run dev",
+    "build": "cd client && bun run build",
+    "start": "bun run build && cd server && bun run start:prod",
+    "install:all": "cd server && bun install && cd ../client && bun install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
