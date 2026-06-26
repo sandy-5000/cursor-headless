@@ -8,6 +8,7 @@ struct MyNotesApp: App {
         WindowGroup {
             ContentView()
                 .environment(settings)
+                .preferredColorScheme(settings.preferredColorScheme)
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
@@ -16,6 +17,7 @@ struct MyNotesApp: App {
         Settings {
             SettingsView()
                 .environment(settings)
+                .preferredColorScheme(settings.preferredColorScheme)
         }
     }
 }

@@ -27,5 +27,6 @@ struct ContentView: View {
         }
         .frame(minWidth: 920, minHeight: 620)
         .tint(settings.accent)
+        .preferredColorScheme(settings.preferredColorScheme)
     }
 }

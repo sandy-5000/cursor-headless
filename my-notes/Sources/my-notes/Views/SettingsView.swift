@@ -8,6 +8,21 @@ struct SettingsView: View {
 
         Form {
             Section {
+                Picker("Appearance", selection: $settings.appearanceMode) {
+                    ForEach(AppearanceMode.allCases) { mode in
+                        Label(mode.label, systemImage: mode.icon)
+                            .tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.vertical, 4)
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("Choose light, dark, or match your Mac system setting.")
+            }
+
+            Section {
                 LazyVGrid(
                     columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3),
                     spacing: 16
@@ -89,6 +104,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .padding(20)
         .frame(width: 440)
+        .preferredColorScheme(settings.preferredColorScheme)
     }
 }
 

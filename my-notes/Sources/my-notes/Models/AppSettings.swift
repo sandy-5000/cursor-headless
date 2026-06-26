@@ -1,5 +1,37 @@
 import SwiftUI
 
+enum AppearanceMode: String, CaseIterable, Identifiable, Codable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: "System"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .system: "circle.lefthalf.filled"
+        case .light: "sun.max"
+        case .dark: "moon"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+}
+
 enum AccentColorOption: String, CaseIterable, Identifiable, Codable {
     case blue
     case teal
@@ -43,6 +75,10 @@ final class AppSettings {
         didSet { persist() }
     }
 
+    var appearanceMode: AppearanceMode {
+        didSet { persist() }
+    }
+
     var titleFontSize: Double {
         didSet { persist() }
     }
@@ -54,6 +90,8 @@ final class AppSettings {
     var accent: Color { accentColor.color }
 
     var accentSoft: Color { accentColor.color.opacity(0.14) }
+
+    var preferredColorScheme: ColorScheme? { appearanceMode.colorScheme }
 
     func titleFont() -> Font {
         .system(size: titleFontSize, weight: .semibold, design: .serif)
@@ -67,6 +105,9 @@ final class AppSettings {
         let storedAccent = userDefaults.string(forKey: Keys.accentColor)
         accentColor = AccentColorOption(rawValue: storedAccent ?? "") ?? .blue
 
+        let storedAppearance = userDefaults.string(forKey: Keys.appearanceMode)
+        appearanceMode = AppearanceMode(rawValue: storedAppearance ?? "") ?? .system
+
         let storedTitleSize = userDefaults.double(forKey: Keys.titleFontSize)
         titleFontSize = storedTitleSize == 0 ? 34 : storedTitleSize.clamped(to: Self.titleFontSizeRange)
 
@@ -76,12 +117,14 @@ final class AppSettings {
 
     func resetToDefaults() {
         accentColor = .blue
+        appearanceMode = .system
         titleFontSize = 34
         contentFontSize = 17
     }
 
     private enum Keys {
         static let accentColor = "accentColor"
+        static let appearanceMode = "appearanceMode"
         static let titleFontSize = "titleFontSize"
         static let contentFontSize = "contentFontSize"
     }
@@ -89,6 +132,7 @@ final class AppSettings {
     private func persist() {
         let defaults = UserDefaults.standard
         defaults.set(accentColor.rawValue, forKey: Keys.accentColor)
+        defaults.set(appearanceMode.rawValue, forKey: Keys.appearanceMode)
         defaults.set(titleFontSize, forKey: Keys.titleFontSize)
         defaults.set(contentFontSize, forKey: Keys.contentFontSize)
     }
