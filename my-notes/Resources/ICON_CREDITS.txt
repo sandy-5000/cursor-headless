@@ -1,0 +1,13 @@
+App icon source
+================
+
+Icon: Notes app icon (notepad with lines)
+Source: IconScout (free icon)
+URL: https://iconscout.com/free-icon/notes-app-6512416_5415945
+License: IconScout Free License (free for personal and commercial use)
+
+Files in this folder:
+- AppIcon.icns       macOS app icon used by the build script
+- AppIcon-source.png 1024x1024 master image
+
+Generated iconset files are not stored in the repo.
