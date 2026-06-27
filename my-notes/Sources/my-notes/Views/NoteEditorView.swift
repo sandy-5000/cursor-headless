@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct NoteEditorView: View {
@@ -59,7 +60,7 @@ struct NoteEditorView: View {
                         store.updateSelectedNote(title: newValue)
                     }
 
-                metadataRow(for: note)
+                metadataRow(for: store.selectedNote ?? note)
 
                 Divider()
                     .padding(.vertical, 22)
@@ -68,7 +69,11 @@ struct NoteEditorView: View {
                 LineSpacedTextEditor(
                     text: $localBody,
                     fontSize: settings.contentFontSize,
-                    lineSpacing: 2
+                    lineSpacing: 2,
+                    linkColor: NSColor(settings.accent),
+                    onOpenLink: { url in
+                        settings.openLink(url)
+                    }
                 )
                     .focused($focusedField, equals: .body)
                     .frame(minHeight: 420)
@@ -124,7 +129,7 @@ struct NoteEditorView: View {
                     .foregroundStyle(settings.accent.opacity(0.85))
             }
         }
-        .font(AppTheme.captionFont())
+        .font(settings.captionFont())
         .foregroundStyle(.secondary)
         .padding(.top, 10)
     }
@@ -149,21 +154,21 @@ private struct EmptyEditorView: View {
                     .fill(settings.accent.opacity(0.12))
                     .frame(width: 88, height: 88)
                 Image(systemName: "square.and.pencil")
-                    .font(.system(size: 34, weight: .medium))
+                    .font(settings.font(size: settings.contentFontSize + 10, weight: .medium))
                     .foregroundStyle(settings.accent)
             }
 
             VStack(spacing: 8) {
                 Text("Your canvas awaits")
-                    .font(.system(size: 24, weight: .semibold, design: .serif))
+                    .font(settings.font(size: settings.titleFontSize, weight: .semibold))
                 Text("Select a note from the sidebar or create something new.")
-                    .font(.system(size: 14))
+                    .font(settings.bodyFont())
                     .foregroundStyle(.secondary)
             }
 
             Button(action: onCreateNote) {
                 Label("New Note", systemImage: "plus")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(settings.font(size: settings.contentFontSize - 3, weight: .semibold))
                     .padding(.horizontal, 18)
                     .padding(.vertical, 10)
             }

@@ -8,10 +8,12 @@ A native macOS notes app built with SwiftUI. Private, local-first, and plain tex
 ## Features
 
 - **Split-view UI** — sidebar note list + editor
-- **Local storage** — notes saved as plain `.txt` files on your Mac
+- **Local storage** — notes saved on your Mac (plain text or encrypted)
+- **Optional encryption** — AES-256 password protection for notes at rest
 - **Search** — filter notes by title or body
 - **Auto-save** — changes persist automatically (~350ms debounce)
-- **Settings** — base color, title font size, content font size (`⌘,`)
+- **Settings** — appearance, base color, title/content font size, browser for links (`⌘,`)
+- **Smart links** — URLs highlighted in notes; click to open in your chosen browser
 - **Date grouping** — Today, Yesterday, Previous 7 Days, Earlier
 - **No network** — everything stays on your machine
 
@@ -65,9 +67,22 @@ Remove the app **and** all saved notes:
 
 ```
 ~/Library/Application Support/MyNotes/
-├── notes.json          # index (titles, dates)
-└── {uuid}.txt          # plain text content per note
+├── notes.json          # index (encrypted if encryption is on)
+├── vault.json          # encryption key metadata (only when encryption is enabled)
+└── {uuid}.txt          # note body (encrypted if encryption is on)
 ```
+
+### Encryption (optional)
+
+Enable in **Settings → Encryption**:
+
+1. Set a password (minimum 8 characters)
+2. Notes are encrypted on disk with **AES-256-GCM**
+3. Enter your password each time you open My Notes
+
+Without your password, other apps only see unreadable encrypted data in the files above.
+
+> **Note:** Encryption protects files at rest on disk. While the app is unlocked, notes exist in memory like any running app. Use a strong password and lock your Mac when away.
 
 ## Keyboard shortcuts
 
@@ -82,7 +97,9 @@ Remove the app **and** all saved notes:
 Open **My Notes → Settings…** to customize:
 
 - **Appearance** — Light, Dark, or System (follows Mac)
+- **Encryption** — password-protect notes at rest (AES-256)
 - **Base color** — accent theme (Blue, Teal, Amber, Rose, Green, Violet)
+- **Browser for links** — System Default, Safari, Chrome, Firefox, Arc, Brave, Edge, or any custom app
 - **Title font size** — 24–48 pt
 - **Content font size** — 12–24 pt
 

@@ -24,7 +24,7 @@ enum AppTheme {
     static let subtleBorder = Color.primary.opacity(0.06)
 
     static func captionFont(size: CGFloat = 12) -> Font {
-        .system(size: size, weight: .medium, design: .rounded)
+        .system(size: size, weight: .medium, design: .default)
     }
 }
 
@@ -38,6 +38,28 @@ struct GlassBackground: View {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(AppTheme.subtleBorder, lineWidth: 1)
             }
+    }
+}
+
+struct PinnedSectionHeaderBackground: View {
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Rectangle()
+                .fill(.regularMaterial)
+
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .controlBackgroundColor).opacity(0.35),
+                    Color(nsColor: .controlBackgroundColor).opacity(0.12),
+                    .clear,
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 18)
+            .offset(y: 18)
+            .allowsHitTesting(false)
+        }
     }
 }
 

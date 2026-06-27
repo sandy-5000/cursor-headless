@@ -8,6 +8,7 @@ final class NotesStore {
     private(set) var selectedNoteID: UUID?
     var searchQuery = ""
 
+    private let vault: VaultManager
     private let fileManager = FileManager.default
     private let storageURL: URL
     private let indexURL: URL
@@ -51,28 +52,62 @@ final class NotesStore {
         }
     }
 
-    init(storageDirectory: URL? = nil) {
+    init(vault: VaultManager, storageDirectory: URL? = nil) {
+        self.vault = vault
         let base = storageDirectory ?? NotesStore.defaultStorageDirectory()
         storageURL = base
         indexURL = base.appendingPathComponent("notes.json", isDirectory: false)
+    }
+
+    func prepareForUse() {
+        guard vault.canReadNotes else { return }
         loadNotes()
-        if notes.isEmpty {
-            let welcome = Note(
-                title: "Welcome to My Notes",
-                body: """
-                A quiet place for your thoughts.
-
-                Everything you write is saved locally as plain text on your Mac — private, simple, and always yours.
-
-                Start typing to replace this note, or press ⌘N to create a new one.
-                """
-            )
-            notes = [welcome]
-            selectedNoteID = welcome.id
-            persistImmediately()
-        } else {
-            selectedNoteID = notes.sorted { $0.modifiedAt > $1.modifiedAt }.first?.id
+        if notes.isEmpty, !fileManager.fileExists(atPath: indexURL.path) {
+            ensureWelcomeNoteIfNeeded()
         }
+    }
+
+    func loadNotes() {
+        guard vault.canReadNotes else { return }
+
+        try? fileManager.createDirectory(at: storageURL, withIntermediateDirectories: true)
+
+        guard fileManager.fileExists(atPath: indexURL.path) else {
+            notes = []
+            selectedNoteID = nil
+            recoverOrphanedNotes()
+            return
+        }
+
+        do {
+            let raw = try Data(contentsOf: indexURL)
+            let data = try revealStoredData(raw)
+            let metadata = try JSONDecoder().decode([NoteMetadata].self, from: data)
+            notes = try metadata.map { item in
+                let body = try readBody(for: item.id)
+                return Note(
+                    id: item.id,
+                    title: item.title,
+                    body: body,
+                    createdAt: item.createdAt,
+                    modifiedAt: item.modifiedAt
+                )
+            }
+            selectedNoteID = notes.sorted { $0.modifiedAt > $1.modifiedAt }.first?.id
+            recoverOrphanedNotes()
+        } catch {
+            notes = []
+            selectedNoteID = nil
+            recoverOrphanedNotes()
+        }
+    }
+
+    func enableEncryption(with vault: VaultManager) {
+        persistImmediately()
+    }
+
+    func disableEncryption(with vault: VaultManager) {
+        persistImmediately()
     }
 
     func createNote() {
@@ -95,8 +130,19 @@ final class NotesStore {
 
     func updateSelectedNote(title: String? = nil, body: String? = nil) {
         guard var note = selectedNote else { return }
-        if let title { note.title = title }
-        if let body { note.body = body }
+
+        var didChange = false
+        if let title, title != note.title {
+            note.title = title
+            didChange = true
+        }
+        if let body, body != note.body {
+            note.body = body
+            didChange = true
+        }
+
+        guard didChange else { return }
+
         note.modifiedAt = .now
 
         if let index = notes.firstIndex(where: { $0.id == note.id }) {
@@ -112,27 +158,82 @@ final class NotesStore {
 
     // MARK: - Persistence
 
-    private func loadNotes() {
-        try? fileManager.createDirectory(at: storageURL, withIntermediateDirectories: true)
+    private func ensureWelcomeNoteIfNeeded() {
+        guard notes.isEmpty else { return }
+        let welcome = Note(
+            title: "Welcome to My Notes",
+            body: """
+            A quiet place for your thoughts.
 
-        guard fileManager.fileExists(atPath: indexURL.path) else { return }
+            Everything you write is saved locally on your Mac. Enable encryption in Settings to protect your notes with a password.
+
+            Start typing to replace this note, or press ⌘N to create a new one.
+            """
+        )
+        notes = [welcome]
+        selectedNoteID = welcome.id
+        persistImmediately()
+    }
+
+    private func recoverOrphanedNotes() {
+        guard let files = try? fileManager.contentsOfDirectory(at: storageURL, includingPropertiesForKeys: [.contentModificationDateKey]) else {
+            return
+        }
+
+        let indexedIDs = Set(notes.map(\.id))
+        var recovered: [Note] = []
+
+        for url in files where url.pathExtension == "txt" {
+            let uuidString = url.deletingPathExtension().lastPathComponent
+            guard let id = UUID(uuidString: uuidString), !indexedIDs.contains(id) else { continue }
+
+            guard let body = try? readBody(at: url), !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                continue
+            }
+
+            let modifiedAt = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .now
+            recovered.append(Note(id: id, title: "", body: body, createdAt: modifiedAt, modifiedAt: modifiedAt))
+        }
+
+        guard !recovered.isEmpty else { return }
+
+        notes.append(contentsOf: recovered)
+        notes.sort { $0.modifiedAt > $1.modifiedAt }
+        selectedNoteID = notes.first?.id
+        persistImmediately()
+    }
+
+    private func readBody(for id: UUID) throws -> String {
+        try readBody(at: contentURL(for: id))
+    }
+
+    private func readBody(at url: URL) throws -> String {
+        guard fileManager.fileExists(atPath: url.path) else { return "" }
+        let raw = try Data(contentsOf: url)
+        let data = try revealStoredData(raw)
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+
+    private func revealStoredData(_ raw: Data) throws -> Data {
+        guard vault.isEncryptionEnabled else { return raw }
 
         do {
-            let data = try Data(contentsOf: indexURL)
-            let metadata = try JSONDecoder().decode([NoteMetadata].self, from: data)
-            notes = metadata.map { item in
-                let body = (try? String(contentsOf: contentURL(for: item.id), encoding: .utf8)) ?? ""
-                return Note(
-                    id: item.id,
-                    title: item.title,
-                    body: body,
-                    createdAt: item.createdAt,
-                    modifiedAt: item.modifiedAt
-                )
-            }
+            return try vault.reveal(raw)
         } catch {
-            notes = []
+            if isLikelyPlaintextJSON(raw) || isLikelyPlaintextUTF8(raw) {
+                return raw
+            }
+            throw error
         }
+    }
+
+    private func isLikelyPlaintextJSON(_ data: Data) -> Bool {
+        (try? JSONDecoder().decode([NoteMetadata].self, from: data)) != nil
+    }
+
+    private func isLikelyPlaintextUTF8(_ data: Data) -> Bool {
+        guard let text = String(data: data, encoding: .utf8) else { return false }
+        return !text.isEmpty && text.allSatisfy { $0.isASCII || $0.isNewline || $0.isWhitespace || $0.isLetter || $0.isNumber || $0.isPunctuation }
     }
 
     private func scheduleSave() {
@@ -145,18 +246,24 @@ final class NotesStore {
     }
 
     private func persistImmediately() {
+        guard vault.canReadNotes else { return }
+
         try? fileManager.createDirectory(at: storageURL, withIntermediateDirectories: true)
 
         for note in notes {
-            try? note.body.write(to: contentURL(for: note.id), atomically: true, encoding: .utf8)
+            if let bodyData = note.body.data(using: .utf8),
+               let protected = try? vault.protect(bodyData) {
+                try? protected.write(to: contentURL(for: note.id), options: .atomic)
+            }
         }
 
         let metadata = notes.map {
             NoteMetadata(id: $0.id, title: $0.title, createdAt: $0.createdAt, modifiedAt: $0.modifiedAt)
         }
 
-        if let data = try? JSONEncoder().encode(metadata) {
-            try? data.write(to: indexURL, options: .atomic)
+        if let data = try? JSONEncoder().encode(metadata),
+           let protected = try? vault.protect(data) {
+            try? protected.write(to: indexURL, options: .atomic)
         }
     }
 

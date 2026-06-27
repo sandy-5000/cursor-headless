@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct NoteDateStampView: View {
+    @Environment(AppSettings.self) private var settings
     let note: Note
     var compact: Bool = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: compact ? 6 : 8) {
             Image(systemName: "clock")
-                .font(.system(size: compact ? 10 : 11, weight: .medium))
+                .font(settings.font(size: compact ? max(settings.contentFontSize - 3, 11) : max(settings.contentFontSize - 2, 12), weight: .medium))
                 .foregroundStyle(.tertiary)
                 .frame(width: compact ? 12 : 14, alignment: .center)
 
@@ -16,7 +17,7 @@ struct NoteDateStampView: View {
                     Text(note.formattedDate)
                     Text(note.formattedTime)
                 }
-                .font(AppTheme.captionFont(size: 11))
+                .font(settings.sidebarCaptionFont())
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -26,7 +27,7 @@ struct NoteDateStampView: View {
                         .foregroundStyle(.quaternary)
                     Text(note.formattedTime)
                 }
-                .font(AppTheme.captionFont(size: 12))
+                .font(settings.captionFont())
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             }

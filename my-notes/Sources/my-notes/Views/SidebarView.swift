@@ -35,15 +35,15 @@ struct SidebarView: View {
                     .fill(settings.accent.opacity(0.15))
                     .frame(width: 34, height: 34)
                 Image(systemName: "note.text")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(settings.font(size: settings.contentFontSize, weight: .semibold))
                     .foregroundStyle(settings.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("My Notes")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(settings.sidebarHeaderFont())
                 Text("\(store.notes.count) note\(store.notes.count == 1 ? "" : "s")")
-                    .font(AppTheme.captionFont())
+                    .font(settings.sidebarCaptionFont())
                     .foregroundStyle(.secondary)
             }
 
@@ -60,9 +60,10 @@ struct SidebarView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-                .font(.system(size: 13, weight: .medium))
+                .font(settings.font(size: settings.contentFontSize - 1, weight: .medium))
 
             TextField("Search notes", text: $store.searchQuery)
+                .font(settings.bodyFont())
                 .textFieldStyle(.plain)
                 .focused($searchFocused)
 
@@ -113,11 +114,17 @@ struct SidebarView: View {
                             }
                         } header: {
                             Text(group.section.rawValue.uppercased())
-                                .font(AppTheme.captionFont(size: 11))
+                                .font(settings.sidebarCaptionFont())
                                 .foregroundStyle(.secondary)
                                 .tracking(0.8)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 4)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 4)
+                                .padding(.top, 8)
+                                .padding(.bottom, 12)
+                                .background {
+                                    PinnedSectionHeaderBackground()
+                                        .padding(.horizontal, -16)
+                                }
                         }
                     }
                 }
@@ -130,10 +137,10 @@ struct SidebarView: View {
     private var emptySearchState: some View {
         VStack(spacing: 10) {
             Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 28))
+                .font(settings.font(size: settings.contentFontSize + 4))
                 .foregroundStyle(.tertiary)
             Text("No matching notes")
-                .font(.system(size: 14, weight: .medium))
+                .font(settings.bodyFont())
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

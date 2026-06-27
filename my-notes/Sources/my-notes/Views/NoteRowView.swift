@@ -14,12 +14,12 @@ struct NoteRowView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(note.displayTitle)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(settings.sidebarTitleFont())
                     .foregroundStyle(isSelected ? Color.primary : Color.primary.opacity(0.92))
                     .lineLimit(1)
 
                 Text(note.preview)
-                    .font(.system(size: 12))
+                    .font(settings.sidebarPreviewFont())
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)

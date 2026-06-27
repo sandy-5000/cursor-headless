@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum AppearanceMode: String, CaseIterable, Identifiable, Codable {
@@ -87,18 +88,58 @@ final class AppSettings {
         didSet { persist() }
     }
 
+    var browserOption: BrowserOption {
+        didSet { persist() }
+    }
+
+    var customBrowserPath: String {
+        didSet { persist() }
+    }
+
     var accent: Color { accentColor.color }
 
     var accentSoft: Color { accentColor.color.opacity(0.14) }
 
     var preferredColorScheme: ColorScheme? { appearanceMode.colorScheme }
 
+    var browserDisplayName: String {
+        BrowserLauncher.displayName(for: browserOption, customBrowserPath: customBrowserPath)
+    }
+
+    func openLink(_ url: URL) {
+        BrowserLauncher.open(url, browser: browserOption, customBrowserPath: customBrowserPath)
+    }
+
+    func font(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .default)
+    }
+
     func titleFont() -> Font {
-        .system(size: titleFontSize, weight: .semibold, design: .serif)
+        font(size: titleFontSize, weight: .semibold)
     }
 
     func bodyFont() -> Font {
-        .system(size: contentFontSize, weight: .regular, design: .default)
+        font(size: contentFontSize, weight: .regular)
+    }
+
+    func captionFont(size: CGFloat? = nil) -> Font {
+        font(size: size ?? max(contentFontSize - 2, 12), weight: .medium)
+    }
+
+    func sidebarHeaderFont() -> Font {
+        font(size: contentFontSize + 2, weight: .semibold)
+    }
+
+    func sidebarTitleFont() -> Font {
+        font(size: contentFontSize, weight: .semibold)
+    }
+
+    func sidebarPreviewFont() -> Font {
+        font(size: max(contentFontSize - 1, 12))
+    }
+
+    func sidebarCaptionFont() -> Font {
+        font(size: max(contentFontSize - 2, 12), weight: .medium)
     }
 
     init(userDefaults: UserDefaults = .standard) {
@@ -113,6 +154,11 @@ final class AppSettings {
 
         let storedContentSize = userDefaults.double(forKey: Keys.contentFontSize)
         contentFontSize = storedContentSize == 0 ? 17 : storedContentSize.clamped(to: Self.contentFontSizeRange)
+
+        let storedBrowser = userDefaults.string(forKey: Keys.browserOption)
+        browserOption = BrowserOption(rawValue: storedBrowser ?? "") ?? .systemDefault
+
+        customBrowserPath = userDefaults.string(forKey: Keys.customBrowserPath) ?? ""
     }
 
     func resetToDefaults() {
@@ -120,6 +166,8 @@ final class AppSettings {
         appearanceMode = .system
         titleFontSize = 34
         contentFontSize = 17
+        browserOption = .systemDefault
+        customBrowserPath = ""
     }
 
     private enum Keys {
@@ -127,6 +175,8 @@ final class AppSettings {
         static let appearanceMode = "appearanceMode"
         static let titleFontSize = "titleFontSize"
         static let contentFontSize = "contentFontSize"
+        static let browserOption = "browserOption"
+        static let customBrowserPath = "customBrowserPath"
     }
 
     private func persist() {
@@ -135,6 +185,8 @@ final class AppSettings {
         defaults.set(appearanceMode.rawValue, forKey: Keys.appearanceMode)
         defaults.set(titleFontSize, forKey: Keys.titleFontSize)
         defaults.set(contentFontSize, forKey: Keys.contentFontSize)
+        defaults.set(browserOption.rawValue, forKey: Keys.browserOption)
+        defaults.set(customBrowserPath, forKey: Keys.customBrowserPath)
     }
 }
 
