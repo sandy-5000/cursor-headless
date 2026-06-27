@@ -27,9 +27,7 @@ struct EncryptionSettingsView: View {
         .frame(width: 440)
         .preferredColorScheme(settings.preferredColorScheme)
         .onAppear {
-            if !vault.requiresUnlock {
-                store.prepareForUse()
-            }
+            settings.ensureValidSelections()
         }
     }
 
@@ -41,22 +39,14 @@ struct EncryptionSettingsView: View {
                     Label(mode.label, systemImage: mode.icon).tag(mode)
                 }
             }
-            .pickerStyle(.segmented)
-            .padding(.vertical, 4)
         } header: {
             Text("Appearance")
         }
 
         Section {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3), spacing: 16) {
-                ForEach(AccentColorOption.allCases) { option in
-                    AccentColorButton(option: option, isSelected: settings.accentColor == option) {
-                        settings.accentColor = option
-                    }
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 10)
+            accentColorGrid
+                .padding(.horizontal, 8)
+                .padding(.vertical, 10)
         } header: {
             Text("Base Color")
         }
@@ -67,6 +57,31 @@ struct EncryptionSettingsView: View {
 
         fontSection(title: "Content Font Size", size: $settings.contentFontSize, range: AppSettings.contentFontSizeRange) {
             Text("The quick brown fox jumps over the lazy dog.").font(settings.bodyFont())
+        }
+    }
+
+    @ViewBuilder
+    private var accentColorGrid: some View {
+        let options = AccentColorOption.allCases
+        let columns = 3
+
+        VStack(spacing: 16) {
+            ForEach(0..<((options.count + columns - 1) / columns), id: \.self) { row in
+                HStack(spacing: 16) {
+                    ForEach(0..<columns, id: \.self) { column in
+                        let index = row * columns + column
+                        if index < options.count {
+                            let option = options[index]
+                            AccentColorButton(settings: settings, option: option, isSelected: settings.accentColor == option) {
+                                settings.accentColor = option
+                            }
+                        } else {
+                            Color.clear
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -248,7 +263,7 @@ struct EncryptionSettingsView: View {
 }
 
 private struct AccentColorButton: View {
-    @Environment(AppSettings.self) private var settings
+    var settings: AppSettings
     let option: AccentColorOption
     let isSelected: Bool
     let action: () -> Void

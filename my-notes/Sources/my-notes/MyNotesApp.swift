@@ -17,6 +17,7 @@ struct MyNotesApp: App {
 
         Settings {
             EncryptionSettingsView(container: container, settings: settings)
+                .environment(settings)
                 .preferredColorScheme(settings.preferredColorScheme)
         }
     }

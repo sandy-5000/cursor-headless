@@ -156,9 +156,22 @@ final class AppSettings {
         contentFontSize = storedContentSize == 0 ? 17 : storedContentSize.clamped(to: Self.contentFontSizeRange)
 
         let storedBrowser = userDefaults.string(forKey: Keys.browserOption)
-        browserOption = BrowserOption(rawValue: storedBrowser ?? "") ?? .systemDefault
+        browserOption = Self.resolvedBrowserOption(
+            BrowserOption(rawValue: storedBrowser ?? "") ?? .systemDefault
+        )
 
         customBrowserPath = userDefaults.string(forKey: Keys.customBrowserPath) ?? ""
+    }
+
+    func ensureValidSelections() {
+        let resolvedBrowser = Self.resolvedBrowserOption(browserOption)
+        if resolvedBrowser != browserOption {
+            browserOption = resolvedBrowser
+        }
+    }
+
+    private static func resolvedBrowserOption(_ option: BrowserOption) -> BrowserOption {
+        BrowserOption.selectableOptions.contains(option) ? option : .systemDefault
     }
 
     func resetToDefaults() {
