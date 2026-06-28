@@ -100,32 +100,49 @@ struct VitalsCardView: View {
     private func storageDetail(_ storage: StorageInfo) -> some View {
         let free = storage.totalBytes >= storage.usedBytes ? storage.totalBytes - storage.usedBytes : 0
         return HStack(spacing: 0) {
-            statColumn(title: "Used", value: Self.short(storage.usedBytes))
-            Divider().frame(height: 24)
-            statColumn(title: "Free", value: Self.short(free))
-            Divider().frame(height: 24)
-            statColumn(title: "Total", value: Self.short(storage.totalBytes))
+            VStack(alignment: .leading, spacing: 6) {
+                inlineStat(title: "Total", value: Self.short(storage.totalBytes))
+                inlineStat(title: "Used", value: Self.short(storage.usedBytes))
+            }
+
+            Spacer(minLength: 10)
+            Divider()
+                .frame(height: 40)
+            Spacer(minLength: 10)
+
+            VStack(spacing: 3) {
+                storageLabel("Remaining")
+                valueBubble(Self.short(free))
+            }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 10)
         .frame(maxWidth: .infinity)
-        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    private func statColumn(title: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            Text(title)
-                .font(.system(size: 8, weight: .medium))
-                .foregroundStyle(.secondary)
+    private func inlineStat(title: String, value: String) -> some View {
+        HStack(spacing: 6) {
+            storageLabel(title)
+                .frame(width: 32, alignment: .leading)
+            valueBubble(value, fontSize: 9)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 4)
+    }
+
+    private func storageLabel(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(.system(size: 7, weight: .semibold))
+            .tracking(0.3)
+            .foregroundStyle(.secondary)
+    }
+
+    private func valueBubble(_ value: String, fontSize: CGFloat = 11) -> some View {
+        Text(value)
+            .font(.system(size: fontSize, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .padding(.vertical, 3)
+            .padding(.horizontal, 8)
+            .background(.white.opacity(0.08), in: Capsule())
     }
 
     private func footer(_ snapshot: VitalsSnapshot) -> some View {
@@ -137,15 +154,6 @@ struct VitalsCardView: View {
                 .font(.system(size: 9))
                 .foregroundStyle(.tertiary)
             Spacer()
-            Button {
-                NSApplication.shared.terminate(nil)
-            } label: {
-                Image(systemName: "power")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("Quit Mac Vitals")
         }
     }
 
