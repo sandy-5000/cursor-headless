@@ -122,7 +122,7 @@ struct VitalsCardView: View {
         HStack(spacing: 6) {
             storageLabel(title)
                 .frame(width: 32, alignment: .leading)
-            valueBubble(value, fontSize: 9)
+            valueBubble(value, fontSize: 9, fixedWidth: 58, allowScaling: false)
         }
     }
 
@@ -133,13 +133,14 @@ struct VitalsCardView: View {
             .foregroundStyle(.secondary)
     }
 
-    private func valueBubble(_ value: String, fontSize: CGFloat = 11) -> some View {
+    private func valueBubble(_ value: String, fontSize: CGFloat = 11, fixedWidth: CGFloat? = nil, allowScaling: Bool = true) -> some View {
         Text(value)
             .font(.system(size: fontSize, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .foregroundStyle(.primary)
             .lineLimit(1)
-            .minimumScaleFactor(0.8)
+            .minimumScaleFactor(allowScaling ? 0.8 : 1)
+            .frame(width: fixedWidth)
             .padding(.vertical, 3)
             .padding(.horizontal, 8)
             .background(.white.opacity(0.08), in: Capsule())
