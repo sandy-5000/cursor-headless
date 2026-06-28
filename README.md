@@ -30,6 +30,8 @@ If something does not work, that is expected. Fork it, fix it, or use it as insp
 
 | App | Description | Stack |
 |-----|-------------|-------|
+| [**mac-vitals**](./mac-vitals/) | Desktop widget for live storage, battery, and RAM — event-driven, ~0% idle CPU | Swift 6, WidgetKit, IOKit, macOS 14+ |
+| [**my-notes**](./my-notes/) | Native macOS notes app — local-first, plain text on disk, optional AES-256 encryption | Swift 6, SwiftUI, macOS 14+ |
 | [**pirate**](./pirate/) | Social platform for small communities (feeds, posts, likes, comments) | Vue 3, Bun, Hono, MongoDB |
 
 Each project has its own `README.md` with setup instructions.
